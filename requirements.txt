@@ -98,8 +98,6 @@ nipype==1.8.6
     #   smriprep (pyproject.toml)
 nitransforms==23.0.0
     # via niworkflows
-niworkflows==1.8.0
-    # via smriprep (pyproject.toml)
 num2words==0.5.12
     # via pybids
 numpy==1.24.3
