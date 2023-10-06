@@ -69,3 +69,51 @@ class AddVol(SimpleInterface):
 
         self._results["out_file"] = out_file
         return runtime
+    
+class NM_ThreshBin(SimpleInterface):
+
+    input_spec = SimpleMathInputSpec
+    output_spec = SimpleMathOutputSpec
+
+    def _run_interface(self, runtime):
+        #load in img data
+        in_img = self.inputs.in_file
+        
+        #define output fname
+        out_file = fname_presuffix(self.inputs.in_file, suffix="_thrbin", newpath=runtime.cwd)
+
+        #define niimath command string
+        cmd_string = 'niimath {in_img} -thr 0 -bin -mul 255 {outfile}'.format(
+            in_img = in_img,
+            outfile=out_file
+        )
+        
+        #call niimath
+        os.system(cmd_string)
+
+        self._results["out_file"] = out_file
+        return runtime
+    
+class NM_UthreshBin(SimpleInterface):
+
+    input_spec = SimpleMathInputSpec
+    output_spec = SimpleMathOutputSpec
+
+    def _run_interface(self, runtime):
+        #load in img data
+        in_img = self.inputs.in_file
+        
+        #define output fname
+        out_file = fname_presuffix(self.inputs.in_file, suffix="_uthrbin", newpath=runtime.cwd)
+
+        #define niimath command string
+        cmd_string = 'niimath {in_img} -uthr 0 -abs -bin -mul 255 {outfile}'.format(
+            in_img = in_img,
+            outfile=out_file
+        )
+        
+        #call niimath
+        os.system(cmd_string)
+
+        self._results["out_file"] = out_file
+        return runtime
