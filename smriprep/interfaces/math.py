@@ -12,6 +12,11 @@ class SimpleMathInputSpec(TraitedSpec):
 class SimpleMathOutputSpec(TraitedSpec):
     out_file = File(desc="Output file name")
 
+class BinaryMathInputSpec(TraitedSpec):
+    in_file = File(exists=True, mandatory=True, desc="Image to operate on")
+    operand_file = File(exists=True, mandatory=True, desc="Image to perform operation with")
+    operand_value = traits.Float(mandatory=False, desc="Value to perform operation with")
+
 #binarization with nibabel and numpy
 #could replace with niimath
 class BinarizeVol(SimpleInterface):
@@ -35,6 +40,32 @@ class BinarizeVol(SimpleInterface):
         out_img = nb.Nifti1Image(in_img_data, in_img.affine, header=in_img.header)
         out_file = fname_presuffix(self.inputs.in_file, suffix="_bin", newpath=runtime.cwd)
         out_img.to_filename(out_file)
+
+        self._results["out_file"] = out_file
+        return runtime
+    
+class AddVol(SimpleInterface):
+
+    input_spec = BinaryMathInputSpec
+    output_spec = SimpleMathOutputSpec
+
+    def _run_interface(self, runtime):
+        #load in img data
+        in_img = self.inputs.in_file
+        op_file = self.inputs.operand_file
+        
+        #define output fname
+        out_file = fname_presuffix(self.inputs.in_file, suffix="_add", newpath=runtime.cwd)
+
+        #define niimath command string
+        cmd_string = 'niimath {in_img} -add {op_img} {outfile}'.format(
+            in_img = in_img,
+            op_img = op_file,
+            outfile=out_file
+        )
+        
+        #call niimath
+        os.system(cmd_string)
 
         self._results["out_file"] = out_file
         return runtime

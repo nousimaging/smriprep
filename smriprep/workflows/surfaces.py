@@ -736,7 +736,7 @@ def init_segs_to_native_wf(*, name="segs_to_native", segmentation="aseg"):
 
 def init_anat_ribbon_wf(name="anat_ribbon_wf"):
 
-    from ..interfaces.math import BinarizeVol
+    from ..interfaces.math import BinarizeVol, AddVol
 
     DEFAULT_MEMORY_MIN_GB = 0.01
     workflow = pe.Workflow(name=name)
@@ -861,7 +861,7 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     )
 
     combine_ribbon_vol_hemis = pe.Node(
-        fsl.maths.BinaryMaths(operation="add"),
+        AddVol(),
         name="combine_ribbon_vol_hemis",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
     )
