@@ -31,7 +31,6 @@ import typing as ty
 from nipype.pipeline import engine as pe
 from nipype.interfaces.base import Undefined
 from nipype.interfaces import (
-    fsl,
     io as nio,
     utility as niu,
     freesurfer as fs,

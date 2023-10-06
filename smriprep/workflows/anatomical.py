@@ -28,7 +28,6 @@ from nipype.pipeline import engine as pe
 from nipype.interfaces import (
     utility as niu,
     freesurfer as fs,
-    fsl,
     image,
 )
 
@@ -57,6 +56,7 @@ from .surfaces import (
     init_surface_recon_wf,
     init_morph_grayords_wf,
 )
+from ..interfaces.math import CustomApplyMask
 
 LOGGER = logging.getLogger("nipype.workflow")
 
@@ -528,7 +528,7 @@ the brain-extracted T1w using `fast` [FSL {fsl_ver}, RRID:SCR_002823,
     surface_recon_wf = init_surface_recon_wf(
         name="surface_recon_wf", omp_nthreads=omp_nthreads, hires=hires
     )
-    applyrefined = pe.Node(fsl.ApplyMask(), name="applyrefined")
+    applyrefined = pe.Node(CustomApplyMask(), name="applyrefined")
     sphere_reg_wf = init_sphere_reg_wf(name="sphere_reg_wf")
 
     if t2w:

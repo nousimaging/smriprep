@@ -143,3 +143,39 @@ class NM_MakeRibbon(SimpleInterface):
 
         self._results["out_file"] = out_file
         return runtime
+    
+class CustomApplyMaskInputSpec(TraitedSpec):
+    in_file = File(
+        exists=True,
+        mandatory=True,
+        desc="Image to be masked")
+    mask_file = File(
+        exists=True,
+        mandatory=True,
+        desc='Mask to be applied')
+
+class CustomApplyMaskOutputSpec(TraitedSpec):
+    out_file = File(exist=True, desc="Image with mask applied")
+
+class CustomApplyMask(SimpleInterface):
+    input_spec = CustomApplyMaskInputSpec
+    output_spec = CustomApplyMaskOutputSpec
+
+    def _run_interface(self, runtime):
+        #define masked output name
+        out_file = fname_presuffix(
+            self.inputs.in_file,
+            newpath=runtime.cwd,
+            suffix='_masked.nii.gz',
+            use_ext=False)
+
+        #load in input and mask
+        input_img = nb.load(self.inputs.in_file)
+        input_data = input_img.get_fdata()
+        mask_data = nb.load(self.inputs.mask_file).get_fdata()
+        #elementwise multiplication to apply mask
+        out_data = input_data * mask_data
+        #save out masked image and pass on file name
+        nb.Nifti1Image(out_data, input_img.affine, header=input_img.header).to_filename(out_file)
+        self._results['out_file'] = out_file
+        return runtime
