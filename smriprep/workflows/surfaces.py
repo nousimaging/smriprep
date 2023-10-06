@@ -739,7 +739,8 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     from ..interfaces.math import (BinarizeVol,
                                    AddVol,
                                    NM_ThreshBin,
-                                   NM_UthreshBin)
+                                   NM_UthreshBin,
+                                   NM_MakeRibbon)
 
     DEFAULT_MEMORY_MIN_GB = 0.01
     workflow = pe.Workflow(name=name)
@@ -843,8 +844,8 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     )
 
     make_ribbon_vol = pe.MapNode(
-        fsl.maths.MultiImageMaths(op_string="-mas %s -mul 255"),
-        iterfield=["in_file", "operand_files"],
+        NM_MakeRibbon(),
+        iterfield=["in_file", "operand_file"],
         name="make_ribbon_vol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
     )
@@ -887,7 +888,7 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
             (split_wm_distvol, merge_wm_distvol_no_flatten, [("out1", "in1")]),
             (split_wm_distvol, merge_wm_distvol_no_flatten, [("out2", "in2")]),
             (bin_pial_distvol, make_ribbon_vol, [("out_file", "in_file")]),
-            (merge_wm_distvol_no_flatten, make_ribbon_vol, [("out", "operand_files")]),
+            (merge_wm_distvol_no_flatten, make_ribbon_vol, [("out", "operand_file")]),
             (make_ribbon_vol, bin_ribbon_vol, [("out_file", "in_file")]),
             (bin_ribbon_vol, split_squeeze_ribbon_vol, [("out_file", "inlist")]),
             (split_squeeze_ribbon_vol, combine_ribbon_vol_hemis, [("out1", "in_file")]),

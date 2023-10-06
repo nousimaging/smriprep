@@ -109,7 +109,33 @@ class NM_UthreshBin(SimpleInterface):
         #define niimath command string
         cmd_string = 'niimath {in_img} -uthr 0 -abs -bin -mul 255 {outfile}'.format(
             in_img = in_img,
-            outfile=out_file
+            outfile = out_file
+        )
+        
+        #call niimath
+        os.system(cmd_string)
+
+        self._results["out_file"] = out_file
+        return runtime
+    
+class NM_MakeRibbon(SimpleInterface):
+
+    input_spec = BinaryMathInputSpec
+    output_spec = SimpleMathOutputSpec
+
+    def _run_interface(self, runtime):
+        #load in img data
+        in_img = self.inputs.in_file
+        op_img = self.inputs.operand_file
+        
+        #define output fname
+        out_file = fname_presuffix(self.inputs.in_file, suffix="_ribbon", newpath=runtime.cwd)
+
+        #define niimath command string
+        cmd_string = 'niimath {in_img} -mas {op_img} -mul 255 {outfile}'.format(
+            in_img = in_img,
+            op_img = op_img,
+            outfile = out_file
         )
         
         #call niimath
