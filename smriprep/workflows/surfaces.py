@@ -735,6 +735,9 @@ def init_segs_to_native_wf(*, name="segs_to_native", segmentation="aseg"):
 
 
 def init_anat_ribbon_wf(name="anat_ribbon_wf"):
+
+    from ..interfaces.math import BinarizeVol
+
     DEFAULT_MEMORY_MIN_GB = 0.01
     workflow = pe.Workflow(name=name)
 
@@ -808,14 +811,14 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     )
 
     bin_wm_distvol = pe.MapNode(
-        fsl.maths.UnaryMaths(operation="bin"),
+        BinarizeVol(),
         iterfield=["in_file"],
         name="bin_wm_distvol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
     )
 
     bin_pial_distvol = pe.MapNode(
-        fsl.maths.UnaryMaths(operation="bin"),
+        BinarizeVol(),
         iterfield=["in_file"],
         name="bin_pial_distvol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
@@ -844,7 +847,7 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     )
 
     bin_ribbon_vol = pe.MapNode(
-        fsl.maths.UnaryMaths(operation="bin"),
+        BinarizeVol(),
         iterfield=["in_file"],
         name="bin_ribbon_vol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
