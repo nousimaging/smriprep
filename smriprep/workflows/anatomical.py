@@ -45,7 +45,7 @@ from niworkflows.interfaces.images import TemplateDimensions, Conform
 from niworkflows.interfaces.nitransforms import ConcatenateXFMs
 from niworkflows.interfaces.utility import KeySelect
 from niworkflows.utils.misc import fix_multi_T1w_source_name, add_suffix
-from niworkflows.anat.ants import init_brain_extraction_wf, init_n4_only_wf
+from niworkflows.anat.ants import init_brain_extraction_wf, init_n4_only_wf, init_atropos_wf
 from ..utils.bids import get_outputnode_spec
 from ..utils.misc import apply_lut as _apply_bids_lut, fs_isRunning as _fs_isRunning
 from .norm import init_anat_norm_wf
@@ -323,13 +323,11 @@ the `antsBrainExtraction.sh` workflow (from ANTs), using {skullstrip_tpl}
 as target template.
 Brain tissue segmentation of cerebrospinal fluid (CSF),
 white-matter (WM) and gray-matter (GM) was performed on
-the brain-extracted T1w using `fast` [FSL {fsl_ver}, RRID:SCR_002823,
-@fsl_fast].
+the brain-extracted T1w using ANTS {ants_ver} Atropos.
 """
 
     workflow.__desc__ = desc.format(
         ants_ver=ANTsInfo.version() or "(version unknown)",
-        fsl_ver=fsl.FAST().version or "(version unknown)",
         num_t1w=num_t1w,
         skullstrip_tpl=skull_strip_template.fullname,
     )
@@ -484,28 +482,20 @@ the brain-extracted T1w using `fast` [FSL {fsl_ver}, RRID:SCR_002823,
     ])
     # fmt:on
 
-    # XXX Keeping FAST separate so that it's easier to swap in ANTs or FreeSurfer
+    atropos_wf = init_atropos_wf(
+        name="atropos_wf",
+        in_segmentation_model=(3,3,1,2)
+    )
 
-    # Brain tissue segmentation - FAST produces: 0 (bg), 1 (wm), 2 (csf), 3 (gm)
-    t1w_dseg = pe.Node(
-        fsl.FAST(segments=True, no_bias=True, probability_maps=True),
-        name="t1w_dseg",
-        mem_gb=3,
-    )
-    lut_t1w_dseg.inputs.lut = (0, 3, 1, 2)  # Maps: 0 -> 0, 3 -> 1, 1 -> 2, 2 -> 3.
-    fast2bids = pe.Node(
-        niu.Function(function=_probseg_fast2bids),
-        name="fast2bids",
-        run_without_submitting=True,
-    )
+    lut_t1w_dseg.inputs.lut = (0, 1, 2, 3)
+    #make into 0 (bg), 1 (gm), 2 (wm), 3 (csf)
 
     # fmt:off
     workflow.connect([
-        (buffernode, t1w_dseg, [('t1w_brain', 'in_files')]),
-        (t1w_dseg, lut_t1w_dseg, [('partial_volume_map', 'in_dseg')]),
-        (t1w_dseg, fast2bids, [('partial_volume_files', 'inlist')]),
-        (fast2bids, anat_norm_wf, [('out', 'inputnode.moving_tpms')]),
-        (fast2bids, outputnode, [('out', 't1w_tpms')]),
+        (buffernode, atropos_wf, [('t1w_brain', 'inputnode.in_files')]),
+        (atropos_wf, lut_t1w_dseg, [('outputnode.out_segm', 'in_dseg')]),
+        (atropos_wf, anat_norm_wf, [('outputnode.out_tpms', 'inputnode.moving_tpms')]),
+        (atropos_wf, outputnode, [('outputnode.out_tpms', 't1w_tpms')]),
     ])
     # fmt:on
     if not freesurfer:  # Flag --fs-no-reconall is set - return
