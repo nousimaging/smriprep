@@ -481,21 +481,26 @@ the brain-extracted T1w using ANTS {ants_ver} Atropos.
         ]),
     ])
     # fmt:on
+    
+    # Brain tissue segmentation - FAST produces: 0 (bg), 1 (wm), 2 (csf), 3 (gm)
+    #atropos outputs 0 bg 1 csg 2 gm 3 wm
+    #Fast outputs 0 bg 1 wm 2 csf 3 gm
+    #needs to be 0 bg 1 gm 2 wm 3 csf
+    #fast conversion 0>0, 3>1, 1>2, 2>3
+    #therefore atropos conversion 0 -> 0, 1 -> 3, 2->1, 3->2
+    lut_t1w_dseg.inputs.lut = (0, 2, 3, 1)  # Maps: 0 -> 0, 2 -> 1, 3 -> 2, 1 -> 3.
 
-    atropos_wf = init_atropos_wf(
-        name="atropos_wf",
-        in_segmentation_model=(3,3,1,2)
-    )
-
-    lut_t1w_dseg.inputs.lut = (0, 1, 2, 3)
-    #make into 0 (bg), 1 (gm), 2 (wm), 3 (csf)
+    atropos2bids = pe.Node(
+        niu.Function(function=_probseg_atropos2bids),
+        name="atropos2bids",
+        run_without_submitting=True)
 
     # fmt:off
     workflow.connect([
-        (buffernode, atropos_wf, [('t1w_brain', 'inputnode.in_files')]),
-        (atropos_wf, lut_t1w_dseg, [('outputnode.out_segm', 'in_dseg')]),
-        (atropos_wf, anat_norm_wf, [('outputnode.out_tpms', 'inputnode.moving_tpms')]),
-        (atropos_wf, outputnode, [('outputnode.out_tpms', 't1w_tpms')]),
+        (brain_extraction_wf, lut_t1w_dseg, [('outputnode.out_segm', 'in_dseg')]),
+        (brain_extraction_wf, atropos2bids, [('outputnode.out_tpms', 'inlist')]),
+        (atropos2bids, anat_norm_wf, [('out', 'inputnode.moving_tpms')]),
+        (atropos2bids, outputnode, [('out', 't1w_tpms')]),
     ])
     # fmt:on
     if not freesurfer:  # Flag --fs-no-reconall is set - return
@@ -906,6 +911,10 @@ def _split_segments(in_file):
     return out_files
 
 
-def _probseg_fast2bids(inlist):
-    """Reorder a list of probseg maps from FAST (CSF, WM, GM) to BIDS (GM, WM, CSF)."""
+def _probseg_atropos2bids(inlist):
+    """Reorder a list of probseg maps from FAST (CSF, WM, GM) to BIDS (GM, WM, CSF).
+    TURING UPDATE: reorders from atropos wf settings (CSF, GM, WM) to BIDS"""
+    print(inlist[0])
+    print(inlist[1])
+    print(inlist[2])
     return (inlist[1], inlist[2], inlist[0])
