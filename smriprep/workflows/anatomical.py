@@ -917,4 +917,5 @@ def _probseg_atropos2bids(inlist):
     print(inlist[0])
     print(inlist[1])
     print(inlist[2])
+    print(inlist[3])
     return (inlist[1], inlist[2], inlist[0])
