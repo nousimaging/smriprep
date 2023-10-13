@@ -739,7 +739,7 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
                                    AddVol,
                                    ThreshBin,
                                    UThreshBin,
-                                   NM_MakeRibbon)
+                                   MakeRibbon)
 
     DEFAULT_MEMORY_MIN_GB = 0.01
     workflow = pe.Workflow(name=name)
@@ -843,7 +843,7 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     )
 
     make_ribbon_vol = pe.MapNode(
-        NM_MakeRibbon(),
+        MakeRibbon(),
         iterfield=["in_file", "operand_file"],
         name="make_ribbon_vol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,

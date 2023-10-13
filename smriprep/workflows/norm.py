@@ -177,6 +177,13 @@ and accessed with *TemplateFlow* [{tf_ver}, @templateflow]:
     )
     inputnode.iterables = [("template", templates)]
 
+    #debugging
+    def print_inputs(seg,tpms):
+        print("ATROPOS OUTPUTS IN ANAT NORM WF AFTER ATROPOS2BIDS\n")
+        print("Called as seg, tpms, expect seg, gm, wm, csf")
+        print(seg)
+        print(tpms)
+
     out_fields = [
         "anat2std_xfm",
         "standardized",
