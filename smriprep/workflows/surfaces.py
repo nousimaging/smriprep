@@ -737,8 +737,8 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
 
     from ..interfaces.math import (BinarizeVol,
                                    AddVol,
-                                   NM_ThreshBin,
-                                   NM_UthreshBin,
+                                   ThreshBin,
+                                   UThreshBin,
                                    NM_MakeRibbon)
 
     DEFAULT_MEMORY_MIN_GB = 0.01
@@ -800,14 +800,14 @@ def init_anat_ribbon_wf(name="anat_ribbon_wf"):
     )
 
     thresh_wm_distvol = pe.MapNode(
-        NM_ThreshBin(),
+        ThreshBin(),
         iterfield=["in_file"],
         name="thresh_wm_distvol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,
     )
 
     uthresh_pial_distvol = pe.MapNode(
-        NM_UthreshBin(),
+        UThreshBin(),
         iterfield=["in_file"],
         name="uthresh_pial_distvol",
         mem_gb=DEFAULT_MEMORY_MIN_GB,

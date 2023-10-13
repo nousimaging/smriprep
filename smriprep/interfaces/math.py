@@ -70,6 +70,72 @@ class AddVol(SimpleInterface):
         self._results["out_file"] = out_file
         return runtime
     
+class ThreshBin(SimpleInterface):
+    input_spec = SimpleMathInputSpec
+    output_spec = SimpleMathOutputSpec
+
+    def _run_interface(self,runtime):
+        #read in img
+        in_img = nb.load(self.inputs.in_file)
+
+        #load data as array
+        in_data = np.array(in_img.get_fdata())
+
+        #match math command  -thr 0 -bin -mul 255
+
+        #apply threshold (0 anything below 0)
+        in_data[in_data<0] = 0
+
+        #binarize
+        #in_data[in_data<0] = 0
+        in_data[in_data>0] = 1
+
+        #multiply by 255
+        in_data = in_data * 255
+
+        #write out new img
+        out_img = nb.Nifti1Image(in_data, in_img.affine, header=in_img.header)
+        out_file = fname_presuffix(self.inputs.in_file, suffix="_thrbin", newpath=runtime.cwd)
+        out_img.to_filename(out_file)
+
+        self._results["out_file"] = out_file
+        return runtime
+
+class UThreshBin(SimpleInterface):
+
+    input_spec = SimpleMathInputSpec
+    output_spec = SimpleMathOutputSpec
+
+    def _run_interface(self,runtime):
+        #read in img
+        in_img = nb.load(self.inputs.in_file)
+
+        #load data as array
+        in_data = np.array(in_img.get_fdata())
+
+        #match math command  -uthr 0 -abs -bin -mul 255
+
+        #apply upper threshold (0 anything above 0)
+        in_data[in_data>0] = 0
+
+        #absolute value
+        in_data = np.absolute(in_data)
+
+        #binarize
+        in_data[in_data<0] = 0 #should be redundant
+        in_data[in_data>0] = 1
+
+        #multiply by 255
+        in_data = in_data * 255
+
+        #write out new img
+        out_img = nb.Nifti1Image(in_data, in_img.affine, header=in_img.header)
+        out_file = fname_presuffix(self.inputs.in_file, suffix="_uthrbin", newpath=runtime.cwd)
+        out_img.to_filename(out_file)
+
+        self._results["out_file"] = out_file
+        return runtime
+    
 class NM_ThreshBin(SimpleInterface):
 
     input_spec = SimpleMathInputSpec
