@@ -178,11 +178,15 @@ and accessed with *TemplateFlow* [{tf_ver}, @templateflow]:
     inputnode.iterables = [("template", templates)]
 
     #debugging
-    def print_inputs(seg,tpms):
+    def _print_tpms(tpms):
         print("ATROPOS OUTPUTS IN ANAT NORM WF AFTER ATROPOS2BIDS\n")
-        print("Called as seg, tpms, expect seg, gm, wm, csf")
-        print(seg)
+        print("expect gm, wm, csf")
         print(tpms)
+
+    debug_help = pe.Node(
+        niu.Function(function=_print_tpms),
+        name="debug_help",
+        run_without_submitting=True)
 
     out_fields = [
         "anat2std_xfm",
@@ -242,6 +246,7 @@ and accessed with *TemplateFlow* [{tf_ver}, @templateflow]:
 
     # fmt:off
     workflow.connect([
+        (inputnode, debug_help, [('moving_tpms','tpms')]),
         (inputnode, split_desc, [('template', 'template')]),
         (inputnode, poutputnode, [('template', 'template')]),
         (inputnode, trunc_mov, [('moving_image', 'op1')]),
