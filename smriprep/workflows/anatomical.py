@@ -914,8 +914,8 @@ def _split_segments(in_file):
 def _probseg_atropos2bids(inlist):
     """Reorder a list of probseg maps from FAST (CSF, WM, GM) to BIDS (GM, WM, CSF).
     TURING UPDATE: reorders from atropos wf settings (CSF, GM, WM) to BIDS"""
+    print("PROBSEG ATROPOS INPUTS:")
     print(inlist[0])
     print(inlist[1])
     print(inlist[2])
-    print(inlist[3])
     return (inlist[1], inlist[2], inlist[0])
