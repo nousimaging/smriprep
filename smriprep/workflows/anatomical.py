@@ -488,7 +488,7 @@ the brain-extracted T1w using ANTS {ants_ver} Atropos.
     #needs to be 0 bg 1 gm 2 wm 3 csf
     #fast conversion 0>0, 3>1, 1>2, 2>3
     #therefore atropos conversion 0 -> 0, 1 -> 3, 2->1, 3->2
-    lut_t1w_dseg.inputs.lut = (0, 2, 3, 1)  # Maps: 0 -> 0, 2 -> 1, 3 -> 2, 1 -> 3.
+    lut_t1w_dseg.inputs.lut = (0, 3, 1, 2)  # Maps: 0 -> 0, 2 -> 1, 3 -> 2, 1 -> 3.
 
     atropos2bids = pe.Node(
         niu.Function(function=_probseg_atropos2bids),
@@ -497,7 +497,7 @@ the brain-extracted T1w using ANTS {ants_ver} Atropos.
 
     # fmt:off
     workflow.connect([
-        (brain_extraction_wf, lut_t1w_dseg, [('outputnode.out_segm', 'in_dseg')]),
+        (brain_extraction_wf, lut_t1w_dseg, [('outputnode.base_segm', 'in_dseg')]),
         (brain_extraction_wf, atropos2bids, [('outputnode.out_tpms', 'inlist')]),
         (atropos2bids, anat_norm_wf, [('out', 'inputnode.moving_tpms')]),
         (atropos2bids, outputnode, [('out', 't1w_tpms')]),
