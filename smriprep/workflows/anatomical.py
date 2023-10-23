@@ -57,6 +57,7 @@ from .surfaces import (
     init_morph_grayords_wf,
 )
 from ..interfaces.math import CustomApplyMask
+from ..interfaces.seg import RelabelAseg, SplitAseg
 
 LOGGER = logging.getLogger("nipype.workflow")
 
@@ -427,11 +428,13 @@ the brain-extracted T1w using ANTS {ants_ver} Atropos.
     # Change LookUp Table - BIDS wants: 0 (bg), 1 (gm), 2 (wm), 3 (csf)
     lut_t1w_dseg = pe.Node(niu.Function(function=_apply_bids_lut), name="lut_t1w_dseg")
 
+    relabel_aseg = pe.Node(RelabelAseg(), name="relabel_aseg")
+
     # fmt:off
     workflow.connect([
-        (lut_t1w_dseg, anat_norm_wf, [
-            ('out', 'inputnode.moving_segmentation')]),
-        (lut_t1w_dseg, outputnode, [('out', 't1w_dseg')]),
+        (relabel_aseg, anat_norm_wf, [
+            ('out_file', 'inputnode.moving_segmentation')]),
+        (relabel_aseg, outputnode, [('out_file', 't1w_dseg')]),
     ])
     # fmt:on
 
@@ -482,25 +485,17 @@ the brain-extracted T1w using ANTS {ants_ver} Atropos.
     ])
     # fmt:on
     
-    # Brain tissue segmentation - FAST produces: 0 (bg), 1 (wm), 2 (csf), 3 (gm)
-    #atropos outputs 0 bg 1 csg 2 gm 3 wm
-    #Fast outputs 0 bg 1 wm 2 csf 3 gm
-    #needs to be 0 bg 1 gm 2 wm 3 csf
-    #fast conversion 0>0, 3>1, 1>2, 2>3
-    #therefore atropos conversion 0 -> 0, 1 -> 3, 2->1, 3->2
-    lut_t1w_dseg.inputs.lut = (0, 3, 1, 2)  # Maps: 0 -> 0, 2 -> 1, 3 -> 2, 1 -> 3.
-
-    atropos2bids = pe.Node(
-        niu.Function(function=_probseg_atropos2bids),
-        name="atropos2bids",
-        run_without_submitting=True)
+    split_aseg = pe.Node(SplitAseg(),name="split_aseg")
+    merge_tpms = pe.Node(niu.Merge(3), name="merge_tpms")
 
     # fmt:off
     workflow.connect([
-        (brain_extraction_wf, lut_t1w_dseg, [('outputnode.base_segm', 'in_dseg')]),
-        (brain_extraction_wf, atropos2bids, [('outputnode.out_tpms', 'inlist')]),
-        (atropos2bids, anat_norm_wf, [('out', 'inputnode.moving_tpms')]),
-        (atropos2bids, outputnode, [('out', 't1w_tpms')]),
+        (relabel_aseg, split_aseg, [('out_file','in_aseg')]),
+        (split_aseg, merge_tpms, [('out_gm','in1'),
+                                  ('out_wm','in2'),
+                                  ('out_csf','in3')]),
+        (merge_tpms, anat_norm_wf, [('out', 'inputnode.moving_tpms')]),
+        (merge_tpms, outputnode, [('out', 't1w_tpms')]),
     ])
     # fmt:on
     if not freesurfer:  # Flag --fs-no-reconall is set - return
@@ -628,6 +623,7 @@ the brain-extracted T1w using ANTS {ants_ver} Atropos.
             ('outputnode.out_aseg', 'inputnode.t1w_fs_aseg'),
             ('outputnode.out_aparc', 'inputnode.t1w_fs_aparc'),
         ]),
+        (surface_recon_wf, relabel_aseg, [('outputnode.out_aseg','in_aseg')]),
         (outputnode, anat_derivatives_wf, [
             ('t1w2fsnative_xfm', 'inputnode.t1w2fsnative_xfm'),
             ('fsnative2t1w_xfm', 'inputnode.fsnative2t1w_xfm'),
