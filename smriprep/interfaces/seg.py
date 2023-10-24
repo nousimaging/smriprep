@@ -15,12 +15,15 @@ class RelabelAseg(SimpleInterface):
     output_spec = RelabelAsegOutputSpec
 
     def _run_interface(self, runtime):
+        print("RELABEL ASEG RUNNING")
         #get new lut
         aseg_lut = _aseg_to_three()
         aseg_lut = np.array(aseg_lut, dtype="int16")
+        print("aseg_lut generated")
 
         #define outname
         out_file = fname_presuffix(self.inputs.in_aseg, suffix="_asegrelabel", newpath=runtime.cwd)
+        print("out_file: ")
 
         #load in data
         segm = nb.load(self.inputs.in_aseg)
@@ -31,6 +34,8 @@ class RelabelAseg(SimpleInterface):
         segm.__class__(
             aseg_lut[np.asanyarray(segm.dataobj, dtype=int)].astype("int16"), segm.affine, hdr
         ).to_filename(out_file)
+
+        self._results["out_file"] = out_file
 
         return runtime
 
